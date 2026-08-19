@@ -1,0 +1,22 @@
+# --- VS Code & IDE Configuration ---
+.vscode/
+.vs/
+*.suo
+*.user
+
+# --- Compiler Outputs & Build Artifacts ---
+# Ignore Windows executable files and debug databases
+*.exe
+*.pdb
+*.ilk
+
+# Ignore Linux/macOS binary outputs
+*.out
+app
+
+# Ignore temporary compiled object files (the middle steps of compilation)
+*.obj
+*.o
+
+# --- Package Managers ---
+vcpkg_installed/
