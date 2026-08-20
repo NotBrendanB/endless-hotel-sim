@@ -1,7 +1,30 @@
 #include <iostream>
+class Occupant {
+    private:
+    std::string name;
+    int stayDuration;
+    public:
+    Occupant(const std::string& o_Name, int o_stayDuration) 
+    : name(o_Name),
+    stayDuration(o_stayDuration)
+    {
+    }
+    const std::string& getName() const {
+        return name;
+    }
+    void setName(const std::string& inputName) {
+        name = inputName;
+    }
+    int getStayDuration() const {
+        return stayDuration;
+    }
+    void setStayDuration(int duration) {
+        stayDuration = duration;
+    }
+};
 
 /* CLASSES + METHODS
-    occupants - stay duration
+    occupants - stay duration, name
     rooms - room #, rate, floor #, isOccupied
     floors - number
     player - dollars, name, age
