@@ -1,4 +1,7 @@
 #include <iostream>
+#include <vector>
+#include <thread>
+#include <chrono>
 class Occupant {
     private:
     std::string name;
@@ -116,7 +119,8 @@ class Room {
     player - dollars, name, age
 
 */
-
+std::vector<Room> createStartRooms();
+void drawHotel();
 int main(){
     /* GAME LOOP
         Welcome player, set up some basic stuff, name, hotel stuff, etc
@@ -133,6 +137,7 @@ int main(){
     */
     std::string nameInput;
     std::string hotelNameInput;
+    int ageInput;
 
     std::cout << "**********************************\n";
     std::cout << "    Welcome to Hotel Simulator   \n";
@@ -140,13 +145,59 @@ int main(){
 
     std::cout << "What is your name?: ";
     std::cin >> nameInput;
+    std::cout << "How old are you?: ";
+    std::cin >> ageInput;
+    Player mainPlayer(0, nameInput, ageInput);
     std::cout << "Hello " << nameInput << "!\n\n";
+    std::this_thread::sleep_for(std::chrono::seconds(1));
 
     std::cout <<"What would you like to name your Hotel?: ";
     std::cin >> hotelNameInput;
+    
+    Floor startingFloor(1, 5);
+    std::vector<std::vector<Room>> roomList;
+    std::vector<Room> firstFloor = createStartRooms();
+    roomList.push_back(firstFloor);
+    
+
+    
+
+    std::cout << nameInput << " is now the proud owner of " << hotelNameInput << " Hotel!\n";
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+    std::cout << "It features " << startingFloor.getNumberFloors() << " floor and " << startingFloor.getNumberRooms() << " rooms.\n\n";
+    std::cout << "**********************************\n\n";
+    std::this_thread::sleep_for(std::chrono::seconds(2));
+
+
+    std::cout << "Guests will spawn everyday and it is now up to you to run the " << hotelNameInput << " Hotel!\n";
+    std::this_thread::sleep_for(std::chrono::seconds(2));
+    std::cout << "It is your job to assign them to a room and perform upgrades to the hotel.\n";
+    std::this_thread::sleep_for(std::chrono::seconds(2));
+    std::cout << "Good Luck!\n\n";
+    std::cout << "**********************************\n\n";
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+
 
     
 
 
     return 0;
+}
+std::vector<Room> createStartRooms() {
+    std::vector<Room> rooms;
+    rooms.push_back(Room(101, 120, 1, false));
+    rooms.push_back(Room(102, 120, 1, false));
+    rooms.push_back(Room(103, 120, 1, false));
+    rooms.push_back(Room(104, 120, 1, false));
+    rooms.push_back(Room(105, 120, 1, false));
+    return rooms;
+}
+void drawHotel(std::vector<std::vector<Room>> hotelState) {
+    /*
+    loop thru floors and rooms (double for loop)
+    print ___________________________________________  (_ times number of rooms on floor) -> needs to happen at the top of the floor loop and once at the end
+    print | room number || room number || room number| for the loop 
+
+    */
+
 }
