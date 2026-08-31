@@ -120,7 +120,9 @@ class Room {
 
 */
 std::vector<Room> createStartRooms();
-void drawHotel();
+void drawHotel(const std::vector<std::vector<Room>>& hotelState);
+void spawnGuests();
+void newday();
 int main(){
     /* GAME LOOP
         Welcome player, set up some basic stuff, name, hotel stuff, etc
@@ -138,6 +140,7 @@ int main(){
     std::string nameInput;
     std::string hotelNameInput;
     int ageInput;
+    int roomNumberInput;
 
     std::cout << "**********************************\n";
     std::cout << "    Welcome to Hotel Simulator   \n";
@@ -178,8 +181,24 @@ int main(){
     std::this_thread::sleep_for(std::chrono::seconds(1));
 
 
-    
+    std::cout << "Here is your hotel!\n";
+    drawHotel(roomList);
 
+    std::cout << "Here is your first guest!\n";
+    Occupant tutorialGuy("Brendan", 3);
+    std::cout << "Guest Name: " << tutorialGuy.getName() << '\n';
+    std::cout << "Stay Duration: " << tutorialGuy.getStayDuration() << '\n';
+    std::cout << "Which room would you like " << tutorialGuy.getName() << " to stay in?: ";
+    std::cin >> roomNumberInput;
+    for(int i = 0; i < roomList.size(); i++) {
+        for(int j = 0; j < roomList[i].size(); j++) {
+            if (roomList[i][j].getRoomNumber() == roomNumberInput) {
+                roomList[i][j].setIsOccupied(true);
+                std::cout << "Congratulations! Room " << roomNumberInput << " is now occupied by " << tutorialGuy.getName() << '\n';
+            }
+        }
+    }
+    std::cout << "You can figure the rest of the game out, have fun!";
 
     return 0;
 }
@@ -192,12 +211,25 @@ std::vector<Room> createStartRooms() {
     rooms.push_back(Room(105, 120, 1, false));
     return rooms;
 }
-void drawHotel(std::vector<std::vector<Room>> hotelState) {
-    /*
-    loop thru floors and rooms (double for loop)
-    print ___________________________________________  (_ times number of rooms on floor) -> needs to happen at the top of the floor loop and once at the end
-    print | room number || room number || room number| for the loop 
+void drawHotel(const std::vector<std::vector<Room>>& hotelState) {
+    for (int i = 0; i < hotelState.size(); i++) {
+        std::cout << std::string(hotelState[i].size() * 5, '_') << "\n";
+        for (int j = 0; j < hotelState[i].size(); j++) {
+            std::cout << "|" << hotelState[i][j].getRoomNumber() << "|";
+        }
+        std::cout <<'\n'<<std::string(hotelState[i].size() * 5, '_') << "\n";
 
-    */
-
+    }
+}
+void spawnGuests() {
+/*
+    Create Occupant Objects, ask where to put, check if occupied, if -> prompt again, not -> assign to room
+    can happen variable amount of times per day but player can always deny room placement
+*/
+}
+void newday() {
+/*
+    collect money, update money, decrement roomdurations, update isoccupied
+    draw hotel
+*/
 }
