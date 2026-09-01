@@ -2,6 +2,7 @@
 #include <vector>
 #include <thread>
 #include <chrono>
+#include <random>
 class Occupant {
     private:
     std::string name;
@@ -121,8 +122,8 @@ class Room {
 */
 std::vector<Room> createStartRooms();
 void drawHotel(const std::vector<std::vector<Room>>& hotelState);
-void spawnGuests();
-void newday();
+void spawnGuests(std::vector<std::vector<Room>>& rooms, std::vector<Occupant>& guests);
+void newday(std::vector<std::vector<Room>>& rooms, std::vector<Occupant>& guests);
 int main(){
     /* GAME LOOP
         Welcome player, set up some basic stuff, name, hotel stuff, etc
@@ -162,6 +163,7 @@ int main(){
     std::vector<Room> firstFloor = createStartRooms();
     roomList.push_back(firstFloor);
     
+    std::vector<Occupant> guestList;
 
     
 
@@ -181,25 +183,28 @@ int main(){
     std::this_thread::sleep_for(std::chrono::seconds(1));
 
 
-    std::cout << "Here is your hotel!\n";
+    std::cout << "Here is the current state of your hotel!\n";
     drawHotel(roomList);
 
-    std::cout << "Here is your first guest!\n";
+    std::cout << "\nHere is your first guest!\n";
     Occupant tutorialGuy("Brendan", 3);
     std::cout << "Guest Name: " << tutorialGuy.getName() << '\n';
     std::cout << "Stay Duration: " << tutorialGuy.getStayDuration() << '\n';
-    std::cout << "Which room would you like " << tutorialGuy.getName() << " to stay in?: ";
+    std::cout << "\nWhich room would you like " << tutorialGuy.getName() << " to stay in?: ";
     std::cin >> roomNumberInput;
     for(int i = 0; i < roomList.size(); i++) {
         for(int j = 0; j < roomList[i].size(); j++) {
             if (roomList[i][j].getRoomNumber() == roomNumberInput) {
                 roomList[i][j].setIsOccupied(true);
                 std::cout << "Congratulations! Room " << roomNumberInput << " is now occupied by " << tutorialGuy.getName() << '\n';
+                guestList.push_back(tutorialGuy);
             }
         }
     }
-    std::cout << "You can figure the rest of the game out, have fun!";
+    std::cout << "\nYou can figure the rest of the game out, have fun!\n";
+    std::cout << "**********************************\n\n";
 
+    spawnGuests(roomList, guestList);
     return 0;
 }
 std::vector<Room> createStartRooms() {
@@ -213,23 +218,69 @@ std::vector<Room> createStartRooms() {
 }
 void drawHotel(const std::vector<std::vector<Room>>& hotelState) {
     for (int i = 0; i < hotelState.size(); i++) {
-        std::cout << std::string(hotelState[i].size() * 5, '_') << "\n";
+        std::cout << std::string(hotelState[i].size() * 5, '-') << "\n";
         for (int j = 0; j < hotelState[i].size(); j++) {
             std::cout << "|" << hotelState[i][j].getRoomNumber() << "|";
         }
-        std::cout <<'\n'<<std::string(hotelState[i].size() * 5, '_') << "\n";
-
+        std::cout <<'\n'<<std::string(hotelState[i].size() * 5, '-') << "\n";
     }
 }
-void spawnGuests() {
-/*
-    Create Occupant Objects, ask where to put, check if occupied, if -> prompt again, not -> assign to room
-    can happen variable amount of times per day but player can always deny room placement
-*/
+void spawnGuests(std::vector<std::vector<Room>>& rooms, std::vector<Occupant>& guests) {
+    /*
+        Create Occupant Objects, ask where to put, check if occupied, if -> prompt again, not -> assign to room
+        can happen variable amount of times per day but player can always deny room placement
+    */
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::string guestNames[] = {"James Smith", "Olivia Johnson", "Liam Williams", "Emma Brown", "Noah Jones", 
+    "Ava Garcia", "Oliver Miller", "Sophia Davis", "Elijah Rodriguez", "Isabella Martinez", 
+    "Lucas Hernandez", "Mia Lopez", "Mason Gonzalez", "Charlotte Wilson", "Logan Anderson", 
+    "Amelia Thomas", "Ethan Taylor", "Harper Moore", "Jackson Jackson", "Evelyn Martin", 
+    "Sebastian Lee", "Abigail Perez", "Alexander Thompson", "Emily White", "Aiden Harris", 
+    "Elizabeth Sanchez", "Matthew Clark", "Sofia Ramirez", "Samuel Lewis", "Avery Robinson", 
+    "David Walker", "Elena Young", "Joseph Allen", "Madison King", "Carter Wright", 
+    "Layla Scott", "Owen Torres", "Victoria Nguyen", "Wyatt Hill", "Chloe Flores", 
+    "John Green", "Grace Adams", "Jack Nelson", "Zoey Baker", "Luke Hall", 
+    "Penelope Rivera", "Dylan Campbell", "Riley Mitchell", "Levi Carter", "Lily Roberts"
+    };
+    std::uniform_int_distribution<> distr(0, sizeof(guestNames)/sizeof(guestNames[0]) - 1);
+    int randomNameIndex = distr(gen);
+    std::uniform_int_distribution<> stayDistr(1, 9);
+    int randomStayIndex = stayDistr(gen);
+
+    Occupant guest(guestNames[randomNameIndex], randomStayIndex);
+
+    std::cout << "Guest Name: " << guest.getName() << '\n';
+    std::cout << "Stay Duration: " << guest.getStayDuration() << '\n';
+
+    bool validRoomNumber = true;
+    while(validRoomNumber) {
+        std::cout << "\nWhich room would you like " << guest.getName() << " to stay in?: ";
+        int roomNumberInput;
+        std::cin >> roomNumberInput;
+        for(int i = 0; i < rooms.size(); i++) {
+            for(int j = 0; j < rooms[i].size(); j++) {
+                if (rooms[i][j].getRoomNumber() == roomNumberInput && !rooms[i][j].getIsOccupied()) {
+                    rooms[i][j].setIsOccupied(true);
+                    std::cout << "Congratulations! Room " << roomNumberInput << " is now occupied by " << guest.getName() << '\n';
+                    guests.push_back(guest);
+                    validRoomNumber = false;
+                }
+                }
+            }
+        }
+    std::cout << "**********************************\n\n";
 }
-void newday() {
+
+void newday(std::vector<std::vector<Room>>& rooms, std::vector<Occupant>& guests) {
 /*
     collect money, update money, decrement roomdurations, update isoccupied
     draw hotel
 */
+for (Occupant guest : guests) {
+    if (guest.getStayDuration() > 1) {
+        guest.setStayDuration(guest.getStayDuration() - 1);
+        
+    }
+}
 }
