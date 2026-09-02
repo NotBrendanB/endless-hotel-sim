@@ -80,6 +80,7 @@ class Room {
     int rate;
     int floorNumber;
     bool isOccupied;
+    Occupant* currentOccupant = nullptr;
     public:
     Room(int r_RoomNumber, int r_rate, int r_FloorNumber, bool r_IsOccupied)
     : roomNumber(r_RoomNumber),
@@ -107,10 +108,16 @@ class Room {
         floorNumber = newFloorNumber;
     }
     bool getIsOccupied() const {
-        return isOccupied;
+        return currentOccupant != nullptr;
     }
-    void setIsOccupied(bool newIsOccupied) {
-        isOccupied = newIsOccupied;
+    void setOccupant(Occupant* person) {
+        currentOccupant = person;
+    }
+    void removeOccupant() {
+        currentOccupant = nullptr; 
+    }
+    Occupant* getOccupant() {
+        return currentOccupant;
     }
 };
 /* CLASSES + METHODS
@@ -122,8 +129,8 @@ class Room {
 */
 std::vector<Room> createStartRooms();
 void drawHotel(const std::vector<std::vector<Room>>& hotelState);
-void spawnGuests(std::vector<std::vector<Room>>& rooms, std::vector<Occupant>& guests);
-void newday(std::vector<std::vector<Room>>& rooms, std::vector<Occupant>& guests);
+void spawnGuests(std::vector<std::vector<Room>>& rooms);
+void newday(std::vector<std::vector<Room>>& rooms, Player& player);
 int main(){
     /* GAME LOOP
         Welcome player, set up some basic stuff, name, hotel stuff, etc
@@ -163,8 +170,6 @@ int main(){
     std::vector<Room> firstFloor = createStartRooms();
     roomList.push_back(firstFloor);
     
-    std::vector<Occupant> guestList;
-
     
 
     std::cout << nameInput << " is now the proud owner of " << hotelNameInput << " Hotel!\n";
@@ -195,16 +200,21 @@ int main(){
     for(int i = 0; i < roomList.size(); i++) {
         for(int j = 0; j < roomList[i].size(); j++) {
             if (roomList[i][j].getRoomNumber() == roomNumberInput) {
-                roomList[i][j].setIsOccupied(true);
+                roomList[i][j].setOccupant(&tutorialGuy);
                 std::cout << "Congratulations! Room " << roomNumberInput << " is now occupied by " << tutorialGuy.getName() << '\n';
-                guestList.push_back(tutorialGuy);
             }
         }
     }
     std::cout << "\nYou can figure the rest of the game out, have fun!\n";
     std::cout << "**********************************\n\n";
 
-    spawnGuests(roomList, guestList);
+    int day = 1;
+    while (true) {
+    spawnGuests(roomList);
+    newday(roomList, mainPlayer);
+    std::cout << "Day " << day << ": You now have $" << mainPlayer.getMoney() << '\n';
+    std::cout << "\n**********************************\n";
+    }
     return 0;
 }
 std::vector<Room> createStartRooms() {
@@ -225,7 +235,7 @@ void drawHotel(const std::vector<std::vector<Room>>& hotelState) {
         std::cout <<'\n'<<std::string(hotelState[i].size() * 5, '-') << "\n";
     }
 }
-void spawnGuests(std::vector<std::vector<Room>>& rooms, std::vector<Occupant>& guests) {
+void spawnGuests(std::vector<std::vector<Room>>& rooms) {
     /*
         Create Occupant Objects, ask where to put, check if occupied, if -> prompt again, not -> assign to room
         can happen variable amount of times per day but player can always deny room placement
@@ -261,26 +271,36 @@ void spawnGuests(std::vector<std::vector<Room>>& rooms, std::vector<Occupant>& g
         for(int i = 0; i < rooms.size(); i++) {
             for(int j = 0; j < rooms[i].size(); j++) {
                 if (rooms[i][j].getRoomNumber() == roomNumberInput && !rooms[i][j].getIsOccupied()) {
-                    rooms[i][j].setIsOccupied(true);
+                    rooms[i][j].setOccupant(&guest);
                     std::cout << "Congratulations! Room " << roomNumberInput << " is now occupied by " << guest.getName() << '\n';
-                    guests.push_back(guest);
                     validRoomNumber = false;
                 }
                 }
             }
         }
-    std::cout << "**********************************\n\n";
+    std::cout << "\n**********************************\n\n";
 }
 
-void newday(std::vector<std::vector<Room>>& rooms, std::vector<Occupant>& guests) {
+void newday(std::vector<std::vector<Room>>& rooms, Player& player) {
 /*
     collect money, update money, decrement roomdurations, update isoccupied
     draw hotel
+
+    go through rooms, look at occupant, if stayduration > 1 -> decrement, look at room rate and add to player money, otherwise, remove occupant and checkout -> remove from guestlist
 */
-for (Occupant guest : guests) {
-    if (guest.getStayDuration() > 1) {
-        guest.setStayDuration(guest.getStayDuration() - 1);
-        
+    
+    for(int i = 0; i < rooms.size(); i++) {
+        for(int j = 0; j < rooms[i].size(); j++) {
+            Occupant* guest = rooms[i][j].getOccupant();
+            if (guest != nullptr) {
+                if (guest->getStayDuration() > 1) {
+                    guest->setStayDuration(guest->getStayDuration() - 1);
+                    player.setMoney(player.getMoney() + rooms[i][j].getRate());
+                } else {
+                    std::cout << guest->getName() << " is checking out of room " << rooms[i][j].getRoomNumber() << '\n';
+                    rooms[i][j].removeOccupant();
+                }
+            }
+        }
     }
-}
 }
