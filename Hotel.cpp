@@ -116,7 +116,7 @@ class Room {
     void removeOccupant() {
         currentOccupant = nullptr; 
     }
-    Occupant* getOccupant() {
+    Occupant* getOccupant() const {
         return currentOccupant;
     }
 };
@@ -131,6 +131,7 @@ std::vector<Room> createStartRooms();
 void drawHotel(const std::vector<std::vector<Room>>& hotelState);
 void spawnGuests(std::vector<std::vector<Room>>& rooms);
 void newday(std::vector<std::vector<Room>>& rooms, Player& player);
+void performUpgrades(std::vector<std::vector<Room>>& rooms, Player& player);
 int main(){
     /* GAME LOOP
         Welcome player, set up some basic stuff, name, hotel stuff, etc
@@ -185,54 +186,70 @@ int main(){
     std::this_thread::sleep_for(std::chrono::seconds(2));
     std::cout << "Good Luck!\n\n";
     std::cout << "**********************************\n\n";
-    std::this_thread::sleep_for(std::chrono::seconds(1));
+    std::this_thread::sleep_for(std::chrono::seconds(2));
 
 
     std::cout << "Here is the current state of your hotel!\n";
     drawHotel(roomList);
+    std::this_thread::sleep_for(std::chrono::seconds(3));
 
     std::cout << "\nHere is your first guest!\n";
-    Occupant tutorialGuy("Brendan", 3);
-    std::cout << "Guest Name: " << tutorialGuy.getName() << '\n';
-    std::cout << "Stay Duration: " << tutorialGuy.getStayDuration() << '\n';
-    std::cout << "\nWhich room would you like " << tutorialGuy.getName() << " to stay in?: ";
+    Occupant* tutorialGuy = new Occupant("Brendan", 3);
+    std::cout << "Guest Name: " << tutorialGuy->getName() << '\n';
+    std::cout << "Stay Duration: " << tutorialGuy->getStayDuration() << '\n';
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+    std::cout << "\nWhich room would you like " << tutorialGuy->getName() << " to stay in?: ";
     std::cin >> roomNumberInput;
     for(int i = 0; i < roomList.size(); i++) {
         for(int j = 0; j < roomList[i].size(); j++) {
             if (roomList[i][j].getRoomNumber() == roomNumberInput) {
-                roomList[i][j].setOccupant(&tutorialGuy);
-                std::cout << "Congratulations! Room " << roomNumberInput << " is now occupied by " << tutorialGuy.getName() << '\n';
+                roomList[i][j].setOccupant(tutorialGuy);
+                std::cout << "Congratulations! Room " << roomNumberInput << " is now occupied by " << tutorialGuy->getName() << '\n';
             }
         }
     }
+    std::this_thread::sleep_for(std::chrono::seconds(1));
     std::cout << "\nYou can figure the rest of the game out, have fun!\n";
     std::cout << "**********************************\n\n";
+    std::this_thread::sleep_for(std::chrono::seconds(1));
 
     int day = 1;
     while (true) {
-    spawnGuests(roomList);
-    newday(roomList, mainPlayer);
-    std::cout << "Day " << day << ": You now have $" << mainPlayer.getMoney() << '\n';
-    std::cout << "\n**********************************\n";
+        std::cout << "Current Hotel State -> \n";
+        drawHotel(roomList);
+        std::this_thread::sleep_for(std::chrono::seconds(3));
+        spawnGuests(roomList);
+        newday(roomList, mainPlayer);
+        performUpgrades(roomList, mainPlayer);
+        std::this_thread::sleep_for(std::chrono::seconds(1));
+        std::cout << "Day " << day << ": You now have $" << mainPlayer.getMoney() << '\n';
+        std::this_thread::sleep_for(std::chrono::seconds(1));
+        std::cout << "\n**********************************\n";
+        day++;
     }
     return 0;
 }
 std::vector<Room> createStartRooms() {
     std::vector<Room> rooms;
-    rooms.push_back(Room(101, 120, 1, false));
-    rooms.push_back(Room(102, 120, 1, false));
-    rooms.push_back(Room(103, 120, 1, false));
-    rooms.push_back(Room(104, 120, 1, false));
-    rooms.push_back(Room(105, 120, 1, false));
+    rooms.push_back(std::move(Room(101, 120, 1, false)));
+    rooms.push_back(std::move(Room(102, 120, 1, false)));
+    rooms.push_back(std::move(Room(103, 120, 1, false)));
+    rooms.push_back(std::move(Room(104, 120, 1, false)));
+    rooms.push_back(std::move(Room(105, 120, 1, false)));
     return rooms;
 }
 void drawHotel(const std::vector<std::vector<Room>>& hotelState) {
-    for (int i = 0; i < hotelState.size(); i++) {
-        std::cout << std::string(hotelState[i].size() * 5, '-') << "\n";
+    for (int i = hotelState.size() - 1; i >= 0; i--) {
+        std::cout << std::string(hotelState[i].size() * 8, '-') << "\n";
         for (int j = 0; j < hotelState[i].size(); j++) {
-            std::cout << "|" << hotelState[i][j].getRoomNumber() << "|";
+            if (hotelState[i][j].getOccupant() == nullptr) {
+                std::cout << "|" << hotelState[i][j].getRoomNumber() << "|";
+            } else {
+                Occupant* occ = hotelState[i][j].getOccupant();
+                std::cout << "|" << occ->getName() << "|";
+            }
         }
-        std::cout <<'\n'<<std::string(hotelState[i].size() * 5, '-') << "\n";
+        std::cout <<'\n'<<std::string(hotelState[i].size() * 8, '-') << "\n";
     }
 }
 void spawnGuests(std::vector<std::vector<Room>>& rooms) {
@@ -258,28 +275,73 @@ void spawnGuests(std::vector<std::vector<Room>>& rooms) {
     std::uniform_int_distribution<> stayDistr(1, 9);
     int randomStayIndex = stayDistr(gen);
 
-    Occupant guest(guestNames[randomNameIndex], randomStayIndex);
+    Occupant* guest = new Occupant(guestNames[randomNameIndex], randomStayIndex);
 
-    std::cout << "Guest Name: " << guest.getName() << '\n';
-    std::cout << "Stay Duration: " << guest.getStayDuration() << '\n';
+    std::cout << "Guest Name: " << guest->getName() << '\n';
+    std::cout << "Stay Duration: " << guest->getStayDuration() << '\n';
+    std::this_thread::sleep_for(std::chrono::seconds(1));
 
     bool validRoomNumber = true;
     while(validRoomNumber) {
-        std::cout << "\nWhich room would you like " << guest.getName() << " to stay in?: ";
+        std::cout << "\nWhich room would you like " << guest->getName() << " to stay in?(Enter 0 to deny customer): ";
         int roomNumberInput;
         std::cin >> roomNumberInput;
+        if (roomNumberInput == 0) {
+            std::cout << "You denied " << guest->getName() << " a room for the night.";
+            delete guest;
+            validRoomNumber = true;
+            break;
+        }
         for(int i = 0; i < rooms.size(); i++) {
             for(int j = 0; j < rooms[i].size(); j++) {
                 if (rooms[i][j].getRoomNumber() == roomNumberInput && !rooms[i][j].getIsOccupied()) {
-                    rooms[i][j].setOccupant(&guest);
-                    std::cout << "Congratulations! Room " << roomNumberInput << " is now occupied by " << guest.getName() << '\n';
+                    rooms[i][j].setOccupant(guest);
+                    std::cout << "Congratulations! Room " << roomNumberInput << " is now occupied by " << guest->getName() << '\n';
                     validRoomNumber = false;
-                }
                 }
             }
         }
+    }
+        
     std::cout << "\n**********************************\n\n";
 }
+void performUpgrades(std::vector<std::vector<Room>>& rooms, Player& player) {
+    /*
+    Ask if they would like to get a new room
+
+    if the floor has less than 5 rooms, create new room on floor
+    otherwise create new room on new floor
+
+    need a way to keep track of room cost on each floor, increment by 20$
+    need a way to keep track of room number for room creation
+    */
+    char input;
+    std::cout << "Would you like to construct a new room? It does cost money!: (y/n)";
+    std::cin >> input;
+    if (input == 'n') {
+    } else {
+        int lastFloorIdx = rooms.size() - 1;
+        int roomsLastFloor = rooms[lastFloorIdx].size();
+        if (roomsLastFloor < 5) {
+            if (player.getMoney() >= 1000 * (lastFloorIdx + 1)) {
+                rooms[lastFloorIdx].push_back(Room((lastFloorIdx + 1) * 100 + roomsLastFloor + 1, (lastFloorIdx + 1) * 100 + 20, lastFloorIdx + 1, false));
+                player.setMoney(player.getMoney() - 1000 * (lastFloorIdx + 1));
+            } else {
+                std::cout << "Insufficient Funds!\n";
+            }
+        } else {
+            if (player.getMoney() >= 1000 * (lastFloorIdx + 2)) {
+                std::vector<Room> newFloor;
+                newFloor.push_back(Room((lastFloorIdx + 2) * 100 + 1, (lastFloorIdx + 2) * 100 + 20, lastFloorIdx + 2, false));
+                rooms.push_back(newFloor);
+                player.setMoney(player.getMoney() - 1000 * (lastFloorIdx + 2));
+            } else {
+                std::cout << "Insufficient Funds!\n";
+            }
+        }
+    }
+}
+
 
 void newday(std::vector<std::vector<Room>>& rooms, Player& player) {
 /*
@@ -299,6 +361,7 @@ void newday(std::vector<std::vector<Room>>& rooms, Player& player) {
                 } else {
                     std::cout << guest->getName() << " is checking out of room " << rooms[i][j].getRoomNumber() << '\n';
                     rooms[i][j].removeOccupant();
+                    delete guest;
                 }
             }
         }
